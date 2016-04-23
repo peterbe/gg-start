@@ -6,10 +6,10 @@ _here = path.dirname(__file__)
 
 setup(
     name='gg-start',
-    version='0.0.3',
+    version='0.0.4',
     description='Plugin for gg for starting branches',
     long_description=open(path.join(_here, 'README.rst')).read(),
-    py_modules=['start'],
+    py_modules=['gg_start'],
     author='Peter Bengtsson',
     author_email='mail@peterbe.com',
     url='https://github.com/peterbe/gg-start',
@@ -19,6 +19,6 @@ setup(
     install_requires=['gg'],
     entry_points="""
         [gg.plugin]
-        cli=start
+        cli=gg_start:start
     """,
 )
