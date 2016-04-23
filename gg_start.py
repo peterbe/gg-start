@@ -1,3 +1,8 @@
+try:
+   input = raw_input
+except NameError:
+   pass
+
 import click
 
 from gg.utils import call_and_error, get_repo_name, get_branches, error_out
