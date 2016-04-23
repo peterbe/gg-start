@@ -1,7 +1,9 @@
 try:
-   input = raw_input
+    input = raw_input
+    # python 2
 except NameError:
-   pass
+    # python 3
+    pass
 
 import click
 
