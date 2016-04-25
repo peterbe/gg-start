@@ -9,7 +9,8 @@ A plugin for `gg <https://github.com/peterbe/gg>`_ for starting new branches.
 Installation
 ============
 
-This is a plugin that depends on ``g`` which gets automatically
+This is a plugin that depends on `gg <https://github.com/peterbe/gg>`_
+which gets automatically
 installed if it's not already available::
 
     pip install gg-start
