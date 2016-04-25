@@ -1,6 +1,0 @@
-* Support for fetching summary from bugzilla
-* Support for fetching summary from GitHub
-* Tests
-* flake8
-* Travis
-* Use GitPython instead
