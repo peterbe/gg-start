@@ -2,6 +2,11 @@
 gg-start
 ========
 
+.. image:: https://travis-ci.org/peterbe/gg-start.svg?branch=master
+    :target: https://travis-ci.org/peterbe/gg-start
+
+.. image:: https://badge.fury.io/py/gg-start.svg
+    :target: https://pypi.python.org/pypi/gg-start
 
 A plugin for `gg <https://github.com/peterbe/gg>`_ for starting new branches.
 
