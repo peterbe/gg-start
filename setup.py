@@ -21,4 +21,6 @@ setup(
         [gg.plugin]
         cli=gg_start:start
     """,
+    setup_requires=['pytest-runner'],
+    tests_require=['pytest', 'mock', 'pytest-mock'],
 )

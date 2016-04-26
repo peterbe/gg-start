@@ -1,3 +1,6 @@
 gg_start.egg-info/
 build/
 dist/
+.cache/
+.eggs/
+.tox/

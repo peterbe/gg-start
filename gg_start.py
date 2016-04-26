@@ -7,7 +7,7 @@ except NameError:
 
 import click
 
-from gg.utils import call_and_error, get_repo_name, get_branches, error_out
+from gg.utils import call_and_error, get_branches, error_out
 from gg.state import save
 from gg.main import cli, pass_config
 
@@ -38,6 +38,7 @@ def start(config, bugnumber=''):
 
     def clean_branch_name(string):
         string = (
+            # XXX re.sub('\s+', ...)
             string
             .replace('   ', ' ')
             .replace('  ', ' ')
@@ -57,4 +58,9 @@ def start(config, bugnumber=''):
     elif config.verbose:
         click.echo(out)
 
-    save(config.configfile, description, branch_name, bugnumber)
+    save(
+        config.config_file,
+        description,
+        branch_name,
+        bugnumber=bugnumber
+    )
