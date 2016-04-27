@@ -5,31 +5,24 @@ import pytest
 import mock
 from click.testing import CliRunner
 
-# gg.main sets up a pass_config decorator which depends on an instance
-# of gg.main.Config. We can't easily mock or override that when invoking
-# tests, so we manually create it and use the OS environment to set it.
-# This isn't pretty but at the time of writing, Apr 2016, there is no
-# other way to handle this more gracefully.
-# Filed this as a reference: https://github.com/pallets/click/issues/565
-CONFIG_FILE = '/tmp/test-gg-start.json'
-os.environ['GG_DEFAULT_CONFIG_FILE'] = CONFIG_FILE
+CONFIGFILE = '/tmp/test-gg-start.json'
 
 # By doing this import we make sure that the plugin is made available
 # but the entry points loading inside gg.main.
 # An alternative would we to set `PYTHONPATH=. py.test` (or something)
 # but then that wouldn't test the entry point loading.
-import gg.main  # NOQA
+from gg.main import Config
 from gg_start import start
 
 
 @pytest.fixture()
 def configfile(request):
 
-    with open(CONFIG_FILE, 'w') as f:
+    with open(CONFIGFILE, 'w') as f:
         json.dump({}, f)
 
     def teardown():
-        os.remove(CONFIG_FILE)
+        os.remove(CONFIGFILE)
     request.addfinalizer(teardown)
 
 
@@ -50,10 +43,13 @@ def test_start(configfile, mocker):
     mocked_popen.side_effect = pipe
 
     runner = CliRunner()
-    result = runner.invoke(start, [''], input='foo "bar"\n')
+    config = Config()
+    config.configfile = CONFIGFILE
+    result = runner.invoke(start, [''], input='foo "bar"\n', obj=config)
     assert result.exit_code == 0
+    assert not result.exception
 
-    with open(CONFIG_FILE) as f:
+    with open(CONFIGFILE) as f:
         saved = json.load(f)
 
         assert 'gg-start-test:foo-bar' in saved
@@ -74,5 +70,7 @@ def test_start_not_a_git_repo(configfile, mocker):
     mocked_popen.side_effect = pipe
 
     runner = CliRunner()
-    result = runner.invoke(start, [''])
+    config = Config()
+    config.configfile = CONFIGFILE
+    result = runner.invoke(start, [''], obj=config)
     assert result.exit_code == 1

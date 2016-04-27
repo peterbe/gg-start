@@ -59,7 +59,7 @@ def start(config, bugnumber=''):
         click.echo(out)
 
     save(
-        config.config_file,
+        config.configfile,
         description,
         branch_name,
         bugnumber=bugnumber
