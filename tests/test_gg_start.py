@@ -57,6 +57,40 @@ def test_start(configfile, mocker):
         assert saved['gg-start-test:foo-bar']['date']
 
 
+def test_start_weird_description(configfile, mocker):
+    mocked_popen = mocker.patch('subprocess.Popen')
+
+    def pipe(args, **kwargs):
+        res = mock.MagicMock()
+        if args[1] == 'branch':
+            res.communicate.return_value = b'master', b''
+        elif args[1] == 'checkout':
+            res.communicate.return_value = b'checked out', b''
+        elif args[1] == 'rev-parse':
+            res.communicate.return_value = b'gg-start-test', b''
+        else:
+            raise NotImplementedError(args)
+        return res
+    mocked_popen.side_effect = pipe
+
+    runner = CliRunner()
+    config = Config()
+    config.configfile = CONFIGFILE
+    summary = "  a!@#$%^&*()_+{}[/]-= ;:   --> ==>  ---  `foo`   ,. <bar>     "
+    result = runner.invoke(start, [''], input=summary + '\n', obj=config)
+    assert result.exit_code == 0
+    assert not result.exception
+
+    expected_branchname = 'a_+-foo-bar'
+
+    with open(CONFIGFILE) as f:
+        saved = json.load(f)
+
+        key = 'gg-start-test:' + expected_branchname
+        assert key in saved
+        assert saved[key]['description'] == summary.strip()
+
+
 def test_start_not_a_git_repo(configfile, mocker):
     mocked_popen = mocker.patch('subprocess.Popen')
 

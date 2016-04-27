@@ -1,3 +1,4 @@
+import re
 try:
     input = raw_input
     # python 2
@@ -27,28 +28,19 @@ def start(config, bugnumber=''):
     if summary:
         description = input('Summary ["{}"]: '.format(summary)).strip()
     else:
-        # XXX how do I make that extra space after the : to appear?
-        description = input('Summary: '.strip())
-    # click.echo(repr(get_repo_name()))
-    # click.echo(description)
+        description = input('Summary: ').strip()
 
     branch_name = ''
     if bugnumber:
         branch_name = 'bug-{}-'.format(bugnumber)
 
     def clean_branch_name(string):
-        string = (
-            # XXX re.sub('\s+', ...)
-            string
-            .replace('   ', ' ')
-            .replace('  ', ' ')
-            .replace(' ', '-')
-            .replace('=', '-')
-            .replace('->', '-')
-            .replace('---', '-')
-        )
-        for each in ':\'"/(),[]{}.?`$<>#*;':
+        string = re.sub('\s+', ' ', string)
+        string = string.replace(' ', '-')
+        string = string.replace('->', '-').replace('=>', '-')
+        for each in '@%^&:\'"/(),[]{}!.?`$<>#*;=':
             string = string.replace(each, '')
+        string = re.sub('-+', '-', string)
         return string.lower().strip()
 
     branch_name += clean_branch_name(description)
