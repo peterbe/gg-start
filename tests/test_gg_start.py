@@ -1,11 +1,11 @@
 import json
 import os
+import tempfile
+import shutil
 
 import pytest
 import mock
 from click.testing import CliRunner
-
-CONFIGFILE = '/tmp/test-gg-start.json'
 
 # By doing this import we make sure that the plugin is made available
 # but the entry points loading inside gg.main.
@@ -16,17 +16,21 @@ from gg_start import start
 
 
 @pytest.fixture()
-def configfile(request):
+def temp_configfile(request):
+    tmp_dir = tempfile.mkdtemp('gg-start')
+    fp = os.path.join(tmp_dir, 'state.json')
 
-    with open(CONFIGFILE, 'w') as f:
+    with open(fp, 'w') as f:
         json.dump({}, f)
 
     def teardown():
-        os.remove(CONFIGFILE)
+        shutil.rmtree(tmp_dir)
+
     request.addfinalizer(teardown)
+    return fp
 
 
-def test_start(configfile, mocker):
+def test_start(temp_configfile, mocker):
     mocked_popen = mocker.patch('subprocess.Popen')
 
     def pipe(args, **kwargs):
@@ -44,12 +48,12 @@ def test_start(configfile, mocker):
 
     runner = CliRunner()
     config = Config()
-    config.configfile = CONFIGFILE
+    config.configfile = temp_configfile
     result = runner.invoke(start, [''], input='foo "bar"\n', obj=config)
     assert result.exit_code == 0
     assert not result.exception
 
-    with open(CONFIGFILE) as f:
+    with open(temp_configfile) as f:
         saved = json.load(f)
 
         assert 'gg-start-test:foo-bar' in saved
@@ -57,7 +61,7 @@ def test_start(configfile, mocker):
         assert saved['gg-start-test:foo-bar']['date']
 
 
-def test_start_weird_description(configfile, mocker):
+def test_start_weird_description(temp_configfile, mocker):
     mocked_popen = mocker.patch('subprocess.Popen')
 
     def pipe(args, **kwargs):
@@ -75,7 +79,7 @@ def test_start_weird_description(configfile, mocker):
 
     runner = CliRunner()
     config = Config()
-    config.configfile = CONFIGFILE
+    config.configfile = temp_configfile
     summary = "  a!@#$%^&*()_+{}[/]-= ;:   --> ==>  ---  `foo`   ,. <bar>     "
     result = runner.invoke(start, [''], input=summary + '\n', obj=config)
     assert result.exit_code == 0
@@ -83,7 +87,7 @@ def test_start_weird_description(configfile, mocker):
 
     expected_branchname = 'a_+-foo-bar'
 
-    with open(CONFIGFILE) as f:
+    with open(temp_configfile) as f:
         saved = json.load(f)
 
         key = 'gg-start-test:' + expected_branchname
@@ -91,7 +95,7 @@ def test_start_weird_description(configfile, mocker):
         assert saved[key]['description'] == summary.strip()
 
 
-def test_start_not_a_git_repo(configfile, mocker):
+def test_start_not_a_git_repo(temp_configfile, mocker):
     mocked_popen = mocker.patch('subprocess.Popen')
 
     def pipe(args, **kwargs):
@@ -105,6 +109,6 @@ def test_start_not_a_git_repo(configfile, mocker):
 
     runner = CliRunner()
     config = Config()
-    config.configfile = CONFIGFILE
+    config.configfile = temp_configfile
     result = runner.invoke(start, [''], obj=config)
     assert result.exit_code == 1
