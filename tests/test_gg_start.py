@@ -5,7 +5,6 @@ import shutil
 
 import git
 import pytest
-import mock
 from click.testing import CliRunner
 
 # By doing this import we make sure that the plugin is made available
