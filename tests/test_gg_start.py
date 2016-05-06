@@ -3,8 +3,8 @@ import os
 import tempfile
 import shutil
 
+import git
 import pytest
-import mock
 from click.testing import CliRunner
 
 # By doing this import we make sure that the plugin is made available
@@ -15,36 +15,19 @@ from gg.main import Config
 from gg_start import start
 
 
-@pytest.fixture()
-def temp_configfile(request):
+@pytest.yield_fixture
+def temp_configfile():
     tmp_dir = tempfile.mkdtemp('gg-start')
     fp = os.path.join(tmp_dir, 'state.json')
-
     with open(fp, 'w') as f:
         json.dump({}, f)
-
-    def teardown():
-        shutil.rmtree(tmp_dir)
-
-    request.addfinalizer(teardown)
-    return fp
+    yield fp
+    shutil.rmtree(tmp_dir)
 
 
 def test_start(temp_configfile, mocker):
-    mocked_popen = mocker.patch('subprocess.Popen')
-
-    def pipe(args, **kwargs):
-        res = mock.MagicMock()
-        if args[1] == 'branch':
-            res.communicate.return_value = b'master', b''
-        elif args[1] == 'checkout':
-            res.communicate.return_value = b'checked out', b''
-        elif args[1] == 'rev-parse':
-            res.communicate.return_value = b'gg-start-test', b''
-        else:
-            raise NotImplementedError(args)
-        return res
-    mocked_popen.side_effect = pipe
+    mocked_git = mocker.patch('git.Repo')
+    mocked_git().working_dir = 'gg-start-test'
 
     runner = CliRunner()
     config = Config()
@@ -52,6 +35,9 @@ def test_start(temp_configfile, mocker):
     result = runner.invoke(start, [''], input='foo "bar"\n', obj=config)
     assert result.exit_code == 0
     assert not result.exception
+
+    mocked_git().create_head.assert_called_with('foo-bar')
+    mocked_git().create_head().checkout.assert_called_with()
 
     with open(temp_configfile) as f:
         saved = json.load(f)
@@ -62,20 +48,8 @@ def test_start(temp_configfile, mocker):
 
 
 def test_start_weird_description(temp_configfile, mocker):
-    mocked_popen = mocker.patch('subprocess.Popen')
-
-    def pipe(args, **kwargs):
-        res = mock.MagicMock()
-        if args[1] == 'branch':
-            res.communicate.return_value = b'master', b''
-        elif args[1] == 'checkout':
-            res.communicate.return_value = b'checked out', b''
-        elif args[1] == 'rev-parse':
-            res.communicate.return_value = b'gg-start-test', b''
-        else:
-            raise NotImplementedError(args)
-        return res
-    mocked_popen.side_effect = pipe
+    mocked_git = mocker.patch('git.Repo')
+    mocked_git().working_dir = 'gg-start-test'
 
     runner = CliRunner()
     config = Config()
@@ -86,6 +60,8 @@ def test_start_weird_description(temp_configfile, mocker):
     assert not result.exception
 
     expected_branchname = 'a_+-foo-bar'
+    mocked_git().create_head.assert_called_with(expected_branchname)
+    mocked_git().create_head().checkout.assert_called_with()
 
     with open(temp_configfile) as f:
         saved = json.load(f)
@@ -96,19 +72,15 @@ def test_start_weird_description(temp_configfile, mocker):
 
 
 def test_start_not_a_git_repo(temp_configfile, mocker):
-    mocked_popen = mocker.patch('subprocess.Popen')
+    mocked_git = mocker.patch('git.Repo')
 
-    def pipe(args, **kwargs):
-        res = mock.MagicMock()
-        if args[1] == 'branch':
-            res.communicate.return_value = b'', b'Not a git repository'
-        else:
-            raise NotImplementedError(args)
-        return res
-    mocked_popen.side_effect = pipe
+    mocked_git.side_effect = git.InvalidGitRepositoryError('/some/place')
 
     runner = CliRunner()
     config = Config()
     config.configfile = temp_configfile
     result = runner.invoke(start, [''], obj=config)
     assert result.exit_code == 1
+    assert '"/some/place" is not a git repository' in result.output
+    assert 'Aborted!' in result.output
+    assert result.exception
