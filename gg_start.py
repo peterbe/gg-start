@@ -1,14 +1,9 @@
 import re
-try:
-    input = raw_input
-    # python 2
-except NameError:
-    # python 3
-    pass
 
+import git
 import click
 
-from gg.utils import call_and_error, get_branches, error_out
+from gg.utils import error_out, get_repo
 from gg.state import save
 from gg.main import cli, pass_config
 
@@ -17,9 +12,10 @@ from gg.main import cli, pass_config
 @click.argument('bugnumber', default='')
 @pass_config
 def start(config, bugnumber=''):
-    branches = get_branches()
-    if 'Not a git repository' in branches:
-        error_out("Are you sure you're in a git repository?")
+    try:
+        repo = get_repo()
+    except git.InvalidGitRepositoryError as exception:
+        error_out('"{}" is not a git repository'.format(exception.args[0]))
 
     if bugnumber:
         raise NotImplementedError(bugnumber)
@@ -44,11 +40,11 @@ def start(config, bugnumber=''):
         return string.lower().strip()
 
     branch_name += clean_branch_name(description)
-    out, err = call_and_error(['git', 'checkout', '-b', branch_name])
-    if err:
-        error_out(err)
-    elif config.verbose:
-        click.echo(out)
+
+    new_branch = repo.create_head(branch_name)
+    new_branch.checkout()
+    if config.verbose:
+        click.echo('Checkout out new branch: {}'.format(branch_name))
 
     save(
         config.configfile,
