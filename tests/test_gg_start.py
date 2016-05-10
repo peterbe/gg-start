@@ -12,7 +12,9 @@ from click.testing import CliRunner
 # An alternative would we to set `PYTHONPATH=. py.test` (or something)
 # but then that wouldn't test the entry point loading.
 from gg.main import Config
-from gg_start import start
+from gg.testing import Response
+
+from gg_start import start, parse_remote_url
 
 
 @pytest.yield_fixture
@@ -84,3 +86,73 @@ def test_start_not_a_git_repo(temp_configfile, mocker):
     assert '"/some/place" is not a git repository' in result.output
     assert 'Aborted!' in result.output
     assert result.exception
+
+
+def test_start_a_digit(temp_configfile, mocker):
+    mocked_git = mocker.patch('git.Repo')
+    mocked_git().working_dir = 'gg-start-test'
+
+    remotes = []
+
+    class Remote:
+        def __init__(self, name, url):
+            self.name = name
+            self.url = url
+
+    remotes.append(Remote('origin', 'git@github.com:myorg/myrepo.git'))
+    remotes.append(Remote('other', 'https://github.com/o/ther.git'))
+    mocked_git().remotes.__iter__.return_value = remotes
+
+    rget = mocker.patch('requests.get')
+
+    def mocked_get(url, *args, **kwargs):
+        if url == 'https://bugzilla.mozilla.org/rest/bug/':
+            params = kwargs['params']
+            assert params['ids'] == '1234'
+            return Response({
+                'bugs': [{
+                    'assigned_to': 'nobody@mozilla.org',
+                    'assigned_to_detail': {
+                        'email': 'nobody@mozilla.org',
+                        'id': 1,
+                        'name': 'nobody@mozilla.org',
+                        'real_name': 'Nobody; OK to take it and work on it'
+                    },
+                    'id': 1234,
+                    'status': 'NEW',
+                    'summary': 'This is the summary'
+                }
+                ],
+                'faults': []
+            })
+        if url == 'https://api.github.com/repos/myorg/myrepo/issues/1234':
+            return Response({
+                'id': 1234,
+                'title': 'Issue Title Here',
+                'html_url': (
+                    'https://api.github.com/repos/myorg/myrepo/issues/123'
+                ),
+            })
+        if url == 'https://api.github.com/repos/o/ther/issues/1234':
+            return Response({'not': 'found'}, 404)
+        raise NotImplementedError(url)
+
+    rget.side_effect = mocked_get
+
+    runner = CliRunner()
+    config = Config()
+    config.configfile = temp_configfile
+    result = runner.invoke(start, ['1234'], obj=config)
+    assert 'Input is ambiguous' in result.output
+    assert 'Issue Title Here' in result.output
+    assert 'This is the summary' in result.output
+    assert result.exit_code == 1
+
+
+def test_parse_remote_url():
+    org, repo = parse_remote_url('git@github.com:org/repo.git')
+    assert org == 'org'
+    assert repo == 'repo'
+    org, repo = parse_remote_url('https://github.com/org/repo.git')
+    assert org == 'org'
+    assert repo == 'repo'
