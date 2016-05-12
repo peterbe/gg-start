@@ -109,6 +109,9 @@ def get_summary(config, bugnumber):
         if config.verbose:
             info_out('Using fork name: {}'.format(fork_name))
         candidates = []
+        # Looping over the remotes, let's figure out which one
+        # is the one that has issues. Let's try every one that isn't
+        # your fork remote.
         for origin in repo.remotes:
             if origin.name == fork_name:
                 continue
