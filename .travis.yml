@@ -21,6 +21,6 @@ deploy:
   user: peterbe
   password:
     secure: C7W9FXgXeFPoxn18lnNWRWwmIjWpf+ilcZZA+b3ZIavCLeAyFhDGs0QYZ67yWzB3QYOuP2YS71AOyPVXMxmqKIWXD+GMZeX12Xecw97yILU5oldjKzq3OacAta/G/aPVWR6z9+Zd6oDlx7oZ5NJHqdpI1ziK21ymrmMndLqTl1+g6ehuFCQex9KnlGaZzxKpj3QoSp482z/zqrvPKzlGm9HG7+ULm8L6dFe1Ck+Osez49Yj6/hGd0NRIfQRn71tuaGoG6YPDycoLlCavqyeQ7O4Jspp4jDDAoVHuupGJjVeHHIBPuAUpG3uu5juttETmjmggmeW92RNgEQkR07GgLOJvU6n3nvM6pwd+jajANFqPk+9nATLN3e5xnU3HqBE1oh+xd3jRoql/OyBjxzbamcLx3gkfooJg/Gau7NAw5w7+K0zTD5qwHAErD5DwSmyfAj2QKJEXrp7PRqGKjoSQ34RNjrrcf40Uwd8FCpHKQ/8jUtjRz27MF0TMeVsmE5O2JfBkbJZbDZkYKUQyS+pzmYQSDhuFn4F3BVQSES9ElU9Avev3t1wuoCAdlBUA/WEgARQx50Ie2cDutUJf2Y5Qlsyh/DeQJKmKUc2i9Q0QwUlQcnrufNSCUDN8lwlNDkZmdqf4PuN5FvQRTAB+oNBy95zo+stvRiLnn+c8nt9cv5g=
+  distributions: sdist bdist_wheel
   on:
-    distributions: sdist bdist_wheel
     repo: peterbe/gg-start
