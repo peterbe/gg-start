@@ -16,6 +16,7 @@ from gg.builtins import github
 @click.argument('bugnumber', default='')
 @pass_config
 def start(config, bugnumber=''):
+    """Create a new topic branch."""
     try:
         repo = get_repo()
     except git.InvalidGitRepositoryError as exception:
