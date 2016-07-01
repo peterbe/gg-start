@@ -6,7 +6,7 @@ _here = path.dirname(__file__)
 
 setup(
     name='gg-start',
-    version='0.0.4',
+    version='0.0.5',
     description='Plugin for gg for starting branches',
     long_description=open(path.join(_here, 'README.rst')).read(),
     py_modules=['gg_start'],
