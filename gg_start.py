@@ -5,7 +5,7 @@ import urllib
 import git
 import click
 
-from gg.utils import error_out, get_repo, info_out
+from gg.utils import error_out, get_repo, info_out, is_github
 from gg.state import save, read
 from gg.main import cli, pass_config
 from gg.builtins import bugzilla
@@ -37,7 +37,13 @@ def start(config, bugnumber=''):
 
     branch_name = ''
     if bugnumber:
-        branch_name = 'bug-{}-'.format(bugnumber)
+        if is_github({
+            'bugnumber': bugnumber,
+            'url': url
+        }):
+            branch_name = 'issue-{}-'.format(bugnumber)
+        else:
+            branch_name = 'bug-{}-'.format(bugnumber)
 
     def clean_branch_name(string):
         string = re.sub('\s+', ' ', string)
