@@ -177,6 +177,34 @@ def test_start_github_issue(temp_configfile, mocker):
         assert saved[key]['date']
 
 
+def test_start_bugzilla_url(temp_configfile, mocker):
+    mocked_git = mocker.patch('git.Repo')
+    mocked_git().working_dir = 'gg-start-test'
+
+    runner = CliRunner()
+    config = Config()
+    config.configfile = temp_configfile
+    result = runner.invoke(
+        start,
+        ['https://bugzilla.mozilla.org/show_bug.cgi?id=123456'],
+        input='foo "bar"\n',
+        obj=config
+    )
+    assert result.exit_code == 0
+    assert not result.exception
+
+    mocked_git().create_head.assert_called_with('bug-123456-foo-bar')
+    mocked_git().create_head().checkout.assert_called_with()
+
+    with open(temp_configfile) as f:
+        saved = json.load(f)
+
+        key = 'gg-start-test:bug-123456-foo-bar'
+        assert key in saved
+        assert saved[key]['description'] == 'foo "bar"'
+        assert saved[key]['date']
+
+
 def test_parse_remote_url():
     org, repo = parse_remote_url('git@github.com:org/repo.git')
     assert org == 'org'
